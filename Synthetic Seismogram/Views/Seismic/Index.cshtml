@@ -1,0 +1,180 @@
+﻿@model Synthetic_Seismogram.Models.ReflectiveCoefficient
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+
+
+<h4>Reflective Coefficient Upload</h4>
+<hr />
+@if (TempData["Error"] != null)
+{
+    <div id="successMsg" class="alert text-center alert-danger clear">
+        @TempData["Error"]
+    </div>
+
+}
+@if (TempData["Success"] != null)
+{
+    <div id="successMsg" class="alert text-center alert-success clear">
+        @TempData["Success"]
+    </div>
+
+}
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Dt" class="control-label"></label>
+                <input asp-for="Dt" class="form-control" />
+                <span asp-validation-for="Dt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <button type="button" id="upbtn" class="control-label upload-btn1 btn btn-secondary"> Select Data to upload</button>
+                @*<input type="file" class="" name="wells" required />*@
+                <input type="file" class="file-input hidden" name="uploadeddata" hidden required />
+                <p class="text-danger" id="error-message"></p><br />
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Upload" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+    <div class="col-md-8">
+        <table id="PO_table" class="table table-striped table-bordered" style="width:100%"></table>
+
+    </div>
+
+
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+     @*<script src="~/lib/jquery/dist/jquery.js"></script>*@
+        @*<script type="text/javascript" src="https://code.jquery.com/jquery-3.5.1.js"></script>*@
+        <script type="text/javascript" src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src=" https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.4/js/dataTables.buttons.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.4/js/buttons.flash.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.4/js/buttons.html5.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.6.4/js/buttons.print.min.js"></script>
+
+        <script type="text/javascript">
+        $('.upload-btn1').on('click', function (e) {
+
+            e.preventDefault();
+            $(".file-input").trigger("click");
+        })
+
+        $('.file-input').on('change', function (e) {
+            $('#error-message').text("");
+            //var fInputEle = $('this');
+
+            var file = this.files[0];
+            //
+            if (file !== null) {
+                filename = file.name;
+                var ext = filename.split('.').pop().toLowerCase();
+                if (ext == "csv") {
+                    //var formData = new FormData();
+                    //formData.append('file', file);
+                    $("#upbtn").html("File Saved/Click to change");
+                    //
+                    //$(".file-input").val(filename);
+
+
+                }
+
+                else {
+
+                    $('#error-message').text("Uploaded file is invalid, kindly upload a valid file");
+                }
+
+            }
+
+
+        })
+
+
+         $(function () {
+             setTimeout(function () { $('#errorMsg').fadeOut(); }, 1000);
+
+             $(window).click(function () { $('#errorMsg').fadeOut(); });
+            $('body').on('click', '.modal-link', function (e) {
+                e.preventDefault();
+
+
+            });
+
+
+            $('body').on('click', '.modal-close-btn', function () {
+                $('#responsePopup').modal('hide');
+                $('#responsePopup').removeData('bs.modal');
+
+            });
+
+            $('#responsePopup').on('hidden.bs.modal', function () {
+                $(this).removeData('bs.modal');
+
+            });
+
+            var peopleList = $('#PO_table').DataTable({
+                serverSide: true,
+                processing: true,
+                dom: 'Bfrtip',
+                buttons: [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                ajax: {
+                url: '@Url.Action("GetDataUploads", "Seismic")',
+                    type: "POST"
+                },
+                //rowId:'Id',
+                columns: [
+                    { data: 'Date', title: 'Upload Date' },
+                    { data: 'Name', title: 'Name' },
+                    { data: 'Dt', title: 'Change in Time' },
+                    { data: 'Id',},
+                    { data: 'Id',},
+
+                ],
+
+                columnDefs:
+                    [
+
+                        {
+                            "render": function (data,type,row) {
+                                debugger
+                                return '<a  href="/Seismic/ViewRfData/' + data + '" class="btn btn-success">Reflective Coefficient Data</a>'
+
+                            }, "targets": 3
+                        },
+                        {
+                            "render": function (data) {
+
+                                return '<a  href="/Seismic/ViewSyntheticData/' + data + '" class="btn btn-success">Synthetic Data</a>'
+
+                            }, "targets": 4
+                        },
+
+                    ]
+                    ,
+                    order: [[0, "desc"]],
+
+                });
+            });
+        </script>
+   }
+   
